@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TruthLensAI</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    margin: 40px;
+    color: #111;
+}
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #333;
+}
+
+.section {
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #ddd;
+}
+
+.section-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.dashboard {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 8px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.label {
+    text-align: center;
+    font-size: 11px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+.claim-box {
+    padding: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 8px;
+    background: #fafafa;
+}
+
+.context-tag {
+    display: inline-block;
+    border: 1px solid #999;
+    padding: 5px 10px;
+    margin: 5px;
+    font-size: 12px;
+    background: #f7f7f7;
+}
+
+.error {
+    color: red;
+    margin-top: 15px;
+}
+
+.drift-high { color: red; }
+.drift-moderate { color: orange; }
+.drift-low { color: green; }
+
+</style>
+</head>
+
+<body>
+
+<h1>TruthLensAI</h1>
+<div class="subtitle">Narrative Intelligence — Analyze Claims for Misinformation</div>
+
+<form method="POST">
+    <textarea name="claim" required>{{ request.form.get('claim','') }}</textarea><br><br>
+    <button type="submit">ANALYZE</button>
+</form>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+{% if result %}
+
+<div class="section">
+    <div class="section-title">ANALYSIS DASHBOARD</div>
+    <div class="dashboard">
+
+        {% set scores = result.get('scores', {}) %}
+
+        {% for key in ['evidence','context','emotion','manipulation','confidence'] %}
+            {% set val = scores.get(key, 0) %}
+            <div>
+                <div class="circle">{{ val }}</div>
+                <div class="label">{{ key|upper }}</div>
+            </div>
+        {% endfor %}
+
+    </div>
+
+    <br>
+    <div>
+        <strong>Drift Risk:</strong>
+        {% set drift = scores.get('drift_risk','Unknown') %}
+        <span class="
+            {% if drift == 'High' %}drift-high
+            {% elif drift == 'Moderate' %}drift-moderate
+            {% else %}drift-low{% endif %}
+        ">
+            {{ drift }}
+        </span>
+    </div>
+</div>
+
+
+<!-- Atomic Claims -->
+<div class="section">
+    <div class="section-title">ATOMIC CLAIMS</div>
+
+    {% set claims = result.get('atomic_claims', []) %}
+
+    {% if claims %}
+        {% for claim in claims %}
+            <div class="claim-box">
+                #{{ loop.index }} {{ claim }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="color:#888;">No atomic claims detected.</div>
+    {% endif %}
+</div>
+
+
+<!-- Evidence Assessment -->
+<div class="section">
+    <div class="section-title">EVIDENCE ASSESSMENT</div>
+    {{ result.get('summary','No evidence assessment available.') }}
+</div>
+
+
+<!-- Missing Context Elements -->
+<div class="section">
+    <div class="section-title">MISSING CONTEXT ELEMENTS</div>
+
+    {% set context_list = result.get('assumptions', []) %}
+
+    {% if context_list %}
+        {% for item in context_list %}
+            <span class="context-tag">{{ item }}</span>
+        {% endfor %}
+    {% else %}
+        <div style="color:#888;">No missing context identified.</div>
+    {% endif %}
+</div>
+
+
+<!-- Emotional & Manipulative Framing -->
+<div class="section">
+    <div class="section-title">EMOTIONAL & MANIPULATIVE FRAMING</div>
+    {{ result.get('summary','No emotional analysis available.') }}
+</div>
+
+
+<!-- Narrative Drift Analysis -->
+<div class="section">
+    <div class="section-title">NARRATIVE DRIFT ANALYSIS</div>
+    {{ result.get('summary','No drift analysis available.') }}
+</div>
+
+
+<!-- Responsible Correction -->
+<div class="section">
+    <div class="section-title">RESPONSIBLE CORRECTION</div>
+    {{ result.get('summary','No correction available.') }}
+</div>
+
+
+<!-- Summary -->
+<div class="section">
+    <div class="section-title">SUMMARY</div>
+    {{ result.get('summary','No summary available.') }}
+</div>
+
+{% endif %}
+
+</body>
+</html>
